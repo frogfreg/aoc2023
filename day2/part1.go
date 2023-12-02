@@ -7,12 +7,6 @@ import (
 	"strings"
 )
 
-type game struct {
-	id    int
-	sets  string
-	valid bool
-}
-
 const maxRed = 12
 const maxGreen = 13
 const maxBlue = 14
@@ -32,7 +26,6 @@ func partOne() {
 			continue
 		}
 		gameId := i + 1
-		_ = gameId
 
 		setGroup := strings.Split(line, ":")[1]
 		setGroup = strings.TrimSpace(setGroup)

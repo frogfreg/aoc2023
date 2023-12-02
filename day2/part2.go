@@ -7,27 +7,6 @@ import (
 	"strings"
 )
 
-var dict = map[string]string{
-	"one":   "1",
-	"two":   "2",
-	"three": "3",
-	"four":  "4",
-	"five":  "5",
-	"six":   "6",
-	"seven": "7",
-	"eight": "8",
-	"nine":  "9",
-	"1":     "1",
-	"2":     "2",
-	"3":     "3",
-	"4":     "4",
-	"5":     "5",
-	"6":     "6",
-	"7":     "7",
-	"8":     "8",
-	"9":     "9",
-}
-
 func partTwo() {
 	inputData, err := os.ReadFile("./input.txt")
 	if err != nil {
@@ -39,61 +18,45 @@ func partTwo() {
 	count := 0
 
 	for _, line := range lines {
-
-		first := getFirstOcurring(line)
-		last := getLastOcurring(line)
-
-		digit := first + last
-
-		num, err := strconv.Atoi(digit)
-
-		if err != nil {
-			panic(err)
+		if line == "" {
+			continue
 		}
 
-		count += num
+		setGroup := strings.Split(line, ":")[1]
+		setGroup = strings.TrimSpace(setGroup)
 
+		count += getPower(setGroup)
 	}
 
 	fmt.Println(count)
 
 }
 
-func getFirstOcurring(s string) string {
-	writtenDigit := ""
-	minOcurringIndex := 100000
+func getPower(setGroup string) int {
+	sets := strings.Split(setGroup, ";")
 
-	for k := range dict {
-		index := strings.Index(s, k)
-		if index != -1 && index < minOcurringIndex {
-			minOcurringIndex = index
-			writtenDigit = k
+	red := 0
+	green := 0
+	blue := 0
+
+	for _, set := range sets {
+		for _, cube := range strings.Split(set, ",") {
+			numColor := strings.Fields(cube)
+			num, _ := strconv.Atoi(numColor[0])
+			color := numColor[1]
+
+			switch color {
+			case "red":
+				red = max(red, num)
+			case "green":
+				green = max(green, num)
+			case "blue":
+				blue = max(blue, num)
+
+			}
+
 		}
 	}
 
-	value, ok := dict[writtenDigit]
-	if !ok {
-		panic("whaaat")
-	}
-
-	return value
-}
-func getLastOcurring(s string) string {
-	writtenDigit := ""
-	maxOcurringIndex := -10000000
-
-	for k := range dict {
-		index := strings.LastIndex(s, k)
-		if index != -1 && index > maxOcurringIndex {
-			maxOcurringIndex = index
-			writtenDigit = k
-		}
-	}
-
-	value, ok := dict[writtenDigit]
-	if !ok {
-		panic("whaaat")
-	}
-
-	return value
+	return red * green * blue
 }
