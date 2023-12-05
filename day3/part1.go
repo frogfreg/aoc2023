@@ -4,20 +4,22 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
-type num struct {
+type partNum struct {
 	adjacent bool
 	digits   string
 }
 
 var digitRegex = regexp.MustCompile(`[0-9]`)
+var symbolRegex = regexp.MustCompile(`[^\w\.\d]`)
 var validNumStrings []string
-var rows []string
+var grid [][]string
 
 func partOne() {
-	inputData, err := os.ReadFile("./test-input.txt")
+	inputData, err := os.ReadFile("./input.txt")
 	if err != nil {
 		panic(err)
 	}
@@ -28,19 +30,77 @@ func partOne() {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
-		rows = append(rows, line)
+
+		grid = append(grid, strings.Split(line, ""))
 	}
 
-	fmt.Printf("%#v\n", rows)
+	for rowIndex, row := range grid {
+		digits := ""
+		adjacent := false
+
+		for colIndex, letter := range row {
+			if digitRegex.MatchString(letter) {
+				digits += letter
+				if adjacentSymbol(rowIndex, colIndex) {
+					adjacent = true
+				}
+			} else {
+				if adjacent {
+					validNumStrings = append(validNumStrings, digits)
+					adjacent = false
+				}
+				digits = ""
+			}
+
+		}
+
+		if adjacent {
+			validNumStrings = append(validNumStrings, digits)
+		}
+	}
+
+	sum := 0
+	for _, digits := range validNumStrings {
+		num, _ := strconv.Atoi(digits)
+		sum += num
+	}
+
+	fmt.Println(sum)
 
 }
 
-func searchPartNumbers(rowIndex, colIndex int) {
+func adjacentSymbol(rowIndex, colIndex int) bool {
 
-	if regexp.MatchString(digitRegex, string(rows[rowIndex][colIndex])) {
-
+	if rowIndex-1 >= 0 && symbolRegex.MatchString(grid[rowIndex-1][colIndex]) {
+		return true
 	}
 
-	digits := ""
+	if rowIndex+1 < len(grid) && symbolRegex.MatchString(grid[rowIndex+1][colIndex]) {
+		return true
+	}
 
+	if colIndex-1 >= 0 && symbolRegex.MatchString(grid[rowIndex][colIndex-1]) {
+		return true
+	}
+
+	if colIndex+1 < len(grid[rowIndex]) && symbolRegex.MatchString(grid[rowIndex][colIndex+1]) {
+		return true
+	}
+
+	if rowIndex-1 >= 0 && colIndex-1 >= 0 && symbolRegex.MatchString(grid[rowIndex-1][colIndex-1]) {
+		return true
+	}
+
+	if rowIndex-1 >= 0 && colIndex+1 < len(grid[rowIndex]) && symbolRegex.MatchString(grid[rowIndex-1][colIndex+1]) {
+		return true
+	}
+
+	if rowIndex+1 < len(grid) && colIndex-1 >= 0 && symbolRegex.MatchString(grid[rowIndex+1][colIndex-1]) {
+		return true
+	}
+
+	if rowIndex+1 < len(grid) && colIndex+1 < len(grid[rowIndex]) && symbolRegex.MatchString(grid[rowIndex+1][colIndex+1]) {
+		return true
+	}
+	return false
 }
