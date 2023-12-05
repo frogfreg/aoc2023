@@ -4,55 +4,43 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
+type num struct {
+	adjacent bool
+	digits   string
+}
+
+var digitRegex = regexp.MustCompile(`[0-9]`)
+var validNumStrings []string
+var rows []string
+
 func partOne() {
-	inputData, err := os.ReadFile("./input.txt")
+	inputData, err := os.ReadFile("./test-input.txt")
 	if err != nil {
 		panic(err)
 	}
 
 	lines := strings.Split(string(inputData), "\n")
 
-	count := 0
-
 	for _, line := range lines {
-		firstIndex := strings.IndexFunc(line, func(letter rune) bool {
-			match, err := regexp.MatchString(`[0-9]`, string(letter))
-			if err != nil {
-				panic(err)
-			}
-
-			return match
-		})
-
-		lastIndex := strings.LastIndexFunc(line, func(letter rune) bool {
-			match, err := regexp.MatchString(`[0-9]`, string(letter))
-			if err != nil {
-				panic(err)
-			}
-
-			return match
-		})
-
-		if firstIndex < 0 || lastIndex < 0 {
-			fmt.Println(line)
-			panic("wtf")
+		if strings.TrimSpace(line) == "" {
+			continue
 		}
+		rows = append(rows, line)
+	}
 
-		d := string(line[firstIndex]) + string(line[lastIndex])
+	fmt.Printf("%#v\n", rows)
 
-		digit, err := strconv.Atoi(d)
-		if err != nil {
-			panic(err)
-		}
+}
 
-		count += digit
+func searchPartNumbers(rowIndex, colIndex int) {
+
+	if regexp.MatchString(digitRegex, string(rows[rowIndex][colIndex])) {
 
 	}
 
-	fmt.Println(count)
+	digits := ""
 
 }
