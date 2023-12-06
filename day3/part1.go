@@ -8,11 +8,6 @@ import (
 	"strings"
 )
 
-type partNum struct {
-	adjacent bool
-	digits   string
-}
-
 var digitRegex = regexp.MustCompile(`[0-9]`)
 var symbolRegex = regexp.MustCompile(`[^\w\.\d]`)
 var validNumStrings []string

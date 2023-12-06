@@ -20,7 +20,7 @@ type digitLocation struct {
 func partTwo() {
 	var grid [][]string
 
-	inputData, err := os.ReadFile("./test-input.txt")
+	inputData, err := os.ReadFile("./input.txt")
 	if err != nil {
 		panic(err)
 	}
@@ -63,21 +63,34 @@ func getGearRatio(grid [][]string, g gear) int {
 	if g.row > 0 {
 		upAdjacent := false
 		dl := digitLocation{}
+
+		var rightCorner *digitLocation
+		var leftCorner *digitLocation
+		var up *digitLocation
+
 		if digitRegex.MatchString(grid[g.row-1][g.col]) {
 			upAdjacent = true
 			dl = digitLocation{g.row - 1, g.col}
+			up = &digitLocation{g.row - 1, g.col}
 		}
 		if g.col > 0 && digitRegex.MatchString(grid[g.row-1][g.col-1]) {
 			upAdjacent = true
 			dl = digitLocation{g.row - 1, g.col - 1}
+			leftCorner = &digitLocation{g.row - 1, g.col - 1}
 		}
 		if g.col+1 < len(grid[g.row]) && digitRegex.MatchString(grid[g.row-1][g.col+1]) {
 			upAdjacent = true
 			dl = digitLocation{g.row - 1, g.col + 1}
+			rightCorner = &digitLocation{g.row - 1, g.col + 1}
 		}
 		if upAdjacent {
-			adjacentCount++
-			dLocations = append(dLocations, dl)
+			if leftCorner != nil && rightCorner != nil && up == nil {
+				dLocations = append(dLocations, *leftCorner, *rightCorner)
+				adjacentCount += 2
+			} else {
+				dLocations = append(dLocations, dl)
+				adjacentCount++
+			}
 		}
 	}
 	// left
@@ -94,21 +107,34 @@ func getGearRatio(grid [][]string, g gear) int {
 	if g.row+1 < len(grid) {
 		downAdjacent := false
 		dl := digitLocation{}
+
+		var rightCorner *digitLocation
+		var leftCorner *digitLocation
+		var down *digitLocation
+
 		if digitRegex.MatchString(grid[g.row+1][g.col]) {
 			downAdjacent = true
 			dl = digitLocation{g.row + 1, g.col}
+			down = &digitLocation{g.row + 1, g.col}
 		}
 		if g.col > 0 && digitRegex.MatchString(grid[g.row+1][g.col-1]) {
 			downAdjacent = true
 			dl = digitLocation{g.row + 1, g.col - 1}
+			leftCorner = &digitLocation{g.row + 1, g.col - 1}
 		}
 		if g.col+1 < len(grid[g.row]) && digitRegex.MatchString(grid[g.row+1][g.col+1]) {
 			downAdjacent = true
 			dl = digitLocation{g.row + 1, g.col + 1}
+			rightCorner = &digitLocation{g.row + 1, g.col + 1}
 		}
 		if downAdjacent {
-			adjacentCount++
-			dLocations = append(dLocations, dl)
+			if leftCorner != nil && rightCorner != nil && down == nil {
+				dLocations = append(dLocations, *leftCorner, *rightCorner)
+				adjacentCount += 2
+			} else {
+				dLocations = append(dLocations, dl)
+				adjacentCount++
+			}
 		}
 	}
 
@@ -127,21 +153,15 @@ func findAndMultiplyDigits(grid [][]string, dLocations []digitLocation) int {
 	for _, dl := range dLocations {
 		digitString := grid[dl.row][dl.col]
 		currentCol := dl.col
-		if dl.row == 0 {
-		}
 
 		for currentCol-1 >= 0 && digitRegex.MatchString(grid[dl.row][currentCol-1]) {
 			digitString = grid[dl.row][currentCol-1] + digitString
 			currentCol--
-			if dl.row == 0 {
-			}
 		}
 		currentCol = dl.col
 		for currentCol+1 < len(grid[dl.row]) && digitRegex.MatchString(grid[dl.row][currentCol+1]) {
 			digitString += grid[dl.row][currentCol+1]
 			currentCol++
-			if dl.row == 0 {
-			}
 		}
 
 		num, _ := strconv.Atoi(digitString)
