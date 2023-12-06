@@ -3,97 +3,150 @@ package main
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
-var dict = map[string]string{
-	"one":   "1",
-	"two":   "2",
-	"three": "3",
-	"four":  "4",
-	"five":  "5",
-	"six":   "6",
-	"seven": "7",
-	"eight": "8",
-	"nine":  "9",
-	"1":     "1",
-	"2":     "2",
-	"3":     "3",
-	"4":     "4",
-	"5":     "5",
-	"6":     "6",
-	"7":     "7",
-	"8":     "8",
-	"9":     "9",
+type gear struct {
+	row int
+	col int
+}
+
+type digitLocation struct {
+	row, col int
 }
 
 func partTwo() {
-	inputData, err := os.ReadFile("./input.txt")
+	var grid [][]string
+
+	inputData, err := os.ReadFile("./test-input.txt")
 	if err != nil {
 		panic(err)
 	}
 
 	lines := strings.Split(string(inputData), "\n")
 
-	count := 0
-
 	for _, line := range lines {
-
-		first := getFirstOcurring(line)
-		last := getLastOcurring(line)
-
-		digit := first + last
-
-		num, err := strconv.Atoi(digit)
-
-		if err != nil {
-			panic(err)
+		if strings.TrimSpace(line) == "" {
+			continue
 		}
 
-		count += num
-
+		grid = append(grid, strings.Split(line, ""))
 	}
 
-	fmt.Println(count)
+	gears := []gear{}
 
+	for rowIndex, row := range grid {
+		for colIndex, letter := range row {
+			if letter == "*" {
+				g := gear{rowIndex, colIndex}
+				gears = append(gears, g)
+			}
+		}
+	}
+
+	sum := 0
+	for _, g := range gears {
+		sum += getGearRatio(grid, g)
+	}
+
+	fmt.Println(sum)
 }
 
-func getFirstOcurring(s string) string {
-	writtenDigit := ""
-	minOcurringIndex := 100000
+func getGearRatio(grid [][]string, g gear) int {
+	var digitRegex = regexp.MustCompile(`[0-9]`)
+	adjacentCount := 0
+	dLocations := []digitLocation{}
 
-	for k := range dict {
-		index := strings.Index(s, k)
-		if index != -1 && index < minOcurringIndex {
-			minOcurringIndex = index
-			writtenDigit = k
+	//up
+	if g.row > 0 {
+		upAdjacent := false
+		dl := digitLocation{}
+		if digitRegex.MatchString(grid[g.row-1][g.col]) {
+			upAdjacent = true
+			dl = digitLocation{g.row - 1, g.col}
+		}
+		if g.col > 0 && digitRegex.MatchString(grid[g.row-1][g.col-1]) {
+			upAdjacent = true
+			dl = digitLocation{g.row - 1, g.col - 1}
+		}
+		if g.col+1 < len(grid[g.row]) && digitRegex.MatchString(grid[g.row-1][g.col+1]) {
+			upAdjacent = true
+			dl = digitLocation{g.row - 1, g.col + 1}
+		}
+		if upAdjacent {
+			adjacentCount++
+			dLocations = append(dLocations, dl)
+		}
+	}
+	// left
+	if g.col > 0 && digitRegex.MatchString(grid[g.row][g.col-1]) {
+		adjacentCount++
+		dLocations = append(dLocations, digitLocation{g.row, g.col - 1})
+	}
+	// right
+	if g.col+1 > len(grid[g.row][g.col+1]) && digitRegex.MatchString(grid[g.row][g.col+1]) {
+		adjacentCount++
+		dLocations = append(dLocations, digitLocation{g.row, g.col + 1})
+	}
+	// down
+	if g.row+1 < len(grid) {
+		downAdjacent := false
+		dl := digitLocation{}
+		if digitRegex.MatchString(grid[g.row+1][g.col]) {
+			downAdjacent = true
+			dl = digitLocation{g.row + 1, g.col}
+		}
+		if g.col > 0 && digitRegex.MatchString(grid[g.row+1][g.col-1]) {
+			downAdjacent = true
+			dl = digitLocation{g.row + 1, g.col - 1}
+		}
+		if g.col+1 < len(grid[g.row]) && digitRegex.MatchString(grid[g.row+1][g.col+1]) {
+			downAdjacent = true
+			dl = digitLocation{g.row + 1, g.col + 1}
+		}
+		if downAdjacent {
+			adjacentCount++
+			dLocations = append(dLocations, dl)
 		}
 	}
 
-	value, ok := dict[writtenDigit]
-	if !ok {
-		panic("whaaat")
+	if adjacentCount != 2 {
+		return 0
 	}
 
-	return value
+	gr := findAndMultiplyDigits(grid, dLocations)
+	return gr
 }
-func getLastOcurring(s string) string {
-	writtenDigit := ""
-	maxOcurringIndex := -10000000
 
-	for k := range dict {
-		index := strings.LastIndex(s, k)
-		if index != -1 && index > maxOcurringIndex {
-			maxOcurringIndex = index
-			writtenDigit = k
+func findAndMultiplyDigits(grid [][]string, dLocations []digitLocation) int {
+	product := 1
+
+	var digitRegex = regexp.MustCompile(`[0-9]`)
+	for _, dl := range dLocations {
+		digitString := grid[dl.row][dl.col]
+		currentCol := dl.col
+		if dl.row == 0 {
 		}
+
+		for currentCol-1 >= 0 && digitRegex.MatchString(grid[dl.row][currentCol-1]) {
+			digitString = grid[dl.row][currentCol-1] + digitString
+			currentCol--
+			if dl.row == 0 {
+			}
+		}
+		currentCol = dl.col
+		for currentCol+1 < len(grid[dl.row]) && digitRegex.MatchString(grid[dl.row][currentCol+1]) {
+			digitString += grid[dl.row][currentCol+1]
+			currentCol++
+			if dl.row == 0 {
+			}
+		}
+
+		num, _ := strconv.Atoi(digitString)
+		product *= num
 	}
 
-	value, ok := dict[writtenDigit]
-	if !ok {
-		panic("whaaat")
-	}
-
-	return value
+	return product
 }
