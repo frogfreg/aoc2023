@@ -3,29 +3,14 @@ package main
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
 
-var dict = map[string]string{
-	"one":   "1",
-	"two":   "2",
-	"three": "3",
-	"four":  "4",
-	"five":  "5",
-	"six":   "6",
-	"seven": "7",
-	"eight": "8",
-	"nine":  "9",
-	"1":     "1",
-	"2":     "2",
-	"3":     "3",
-	"4":     "4",
-	"5":     "5",
-	"6":     "6",
-	"7":     "7",
-	"8":     "8",
-	"9":     "9",
+type cardInfo struct {
+	generates int
+	quantity  int
 }
 
 func partTwo() {
@@ -34,66 +19,45 @@ func partTwo() {
 		panic(err)
 	}
 
+	cards := map[int]cardInfo{}
+
 	lines := strings.Split(string(inputData), "\n")
-
-	count := 0
-
 	for _, line := range lines {
-
-		first := getFirstOcurring(line)
-		last := getLastOcurring(line)
-
-		digit := first + last
-
-		num, err := strconv.Atoi(digit)
-
-		if err != nil {
-			panic(err)
-		}
-
-		count += num
-
+		id, card := countWinners(line)
+		cards[id] = card
 	}
 
-	fmt.Println(count)
+	for cardId := 1; cardId <= len(cards); cardId++ {
+		for i := 1; i <= cards[cardId].generates; i++ {
+			if childCard, exists := cards[cardId+i]; exists {
+				childCard.quantity += cards[cardId].quantity
+				cards[cardId+i] = childCard
+			}
+		}
+	}
 
+	sum := 0
+	for _, card := range cards {
+		sum += card.quantity
+	}
+
+	fmt.Println(sum)
 }
 
-func getFirstOcurring(s string) string {
-	writtenDigit := ""
-	minOcurringIndex := 100000
+func countWinners(card string) (int, cardInfo) {
 
-	for k := range dict {
-		index := strings.Index(s, k)
-		if index != -1 && index < minOcurringIndex {
-			minOcurringIndex = index
-			writtenDigit = k
+	cardParts := strings.Split(card, ":")
+	id, _ := strconv.Atoi(strings.Fields(cardParts[0])[1])
+	raw := strings.Split(cardParts[1], "|")
+	winners := strings.Fields(raw[0])
+	have := strings.Fields(raw[1])
+	matches := 0
+
+	for _, num := range winners {
+		if slices.Contains(have, num) {
+			matches++
 		}
 	}
 
-	value, ok := dict[writtenDigit]
-	if !ok {
-		panic("whaaat")
-	}
-
-	return value
-}
-func getLastOcurring(s string) string {
-	writtenDigit := ""
-	maxOcurringIndex := -10000000
-
-	for k := range dict {
-		index := strings.LastIndex(s, k)
-		if index != -1 && index > maxOcurringIndex {
-			maxOcurringIndex = index
-			writtenDigit = k
-		}
-	}
-
-	value, ok := dict[writtenDigit]
-	if !ok {
-		panic("whaaat")
-	}
-
-	return value
+	return id, cardInfo{matches, 1}
 }
