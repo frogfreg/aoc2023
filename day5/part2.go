@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"slices"
 	"strconv"
 	"strings"
 )
 
-type cardInfo struct {
-	generates int
-	quantity  int
+type seedPair struct {
+	start  int
+	sRange int
 }
 
 func partTwo() {
@@ -19,45 +20,77 @@ func partTwo() {
 		panic(err)
 	}
 
-	cards := map[int]cardInfo{}
-
 	lines := strings.Split(string(inputData), "\n")
-	for _, line := range lines {
-		id, card := countWinners(line)
-		cards[id] = card
+
+	seedStrList := strings.Fields(strings.TrimPrefix(lines[0], "seeds:"))
+	seedList := []int{}
+
+	for _, seedStr := range seedStrList {
+		num, _ := strconv.Atoi(seedStr)
+		seedList = append(seedList, num)
 	}
 
-	for cardId := 1; cardId <= len(cards); cardId++ {
-		for i := 1; i <= cards[cardId].generates; i++ {
-			if childCard, exists := cards[cardId+i]; exists {
-				childCard.quantity += cards[cardId].quantity
-				cards[cardId+i] = childCard
+	seedPairs := []seedPair{}
+
+	currPair := []int{}
+	for _, s := range seedList {
+		if len(currPair) == 2 {
+			seedPairs = append(seedPairs, seedPair{currPair[0], currPair[1]})
+			currPair = []int{}
+		}
+
+		currPair = append(currPair, s)
+	}
+	seedPairs = append(seedPairs, seedPair{currPair[0], currPair[1]})
+
+	toDestinationMap := map[string][]mapping{}
+
+	currKey := ""
+
+	for _, l := range lines[1:] {
+		if strings.TrimSpace(l) == "" {
+			continue
+		}
+		if strings.Contains(l, "map:") {
+			currKey = strings.Fields(l)[0]
+			continue
+		}
+
+		mInts := []int{}
+
+		for _, num := range strings.Fields(l) {
+			n, err := strconv.Atoi(num)
+			if err != nil {
+				panic(err)
 			}
+			mInts = append(mInts, n)
+		}
+
+		m := mapping{mInts[0], mInts[1], mInts[2]}
+
+		toDestinationMap[currKey] = append(toDestinationMap[currKey], m)
+
+	}
+
+	keys := []string{}
+
+	for k := range toDestinationMap {
+		keys = append(keys, k)
+	}
+
+	slices.SortFunc(keys, func(a, b string) int {
+		return order[a] - order[b]
+	})
+
+	minLocation := math.MaxInt
+
+	for _, sp := range seedPairs {
+		for i := sp.start; i < sp.start+sp.sRange; i++ {
+			location := getSeedLocation(i, toDestinationMap, keys)
+			minLocation = min(minLocation, location)
 		}
 	}
 
-	sum := 0
-	for _, card := range cards {
-		sum += card.quantity
-	}
+	fmt.Println(minLocation)
 
-	fmt.Println(sum)
-}
-
-func countWinners(card string) (int, cardInfo) {
-
-	cardParts := strings.Split(card, ":")
-	id, _ := strconv.Atoi(strings.Fields(cardParts[0])[1])
-	raw := strings.Split(cardParts[1], "|")
-	winners := strings.Fields(raw[0])
-	have := strings.Fields(raw[1])
-	matches := 0
-
-	for _, num := range winners {
-		if slices.Contains(have, num) {
-			matches++
-		}
-	}
-
-	return id, cardInfo{matches, 1}
 }
