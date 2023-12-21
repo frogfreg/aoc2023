@@ -88,7 +88,6 @@ func partOne() {
 	}
 
 	fmt.Println(minLocation)
-
 }
 
 func getSeedLocation(seed int, toDestinationMap map[string][]mapping, sortedKeys []string) int {

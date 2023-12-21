@@ -92,5 +92,4 @@ func partTwo() {
 	}
 
 	fmt.Println(minLocation)
-
 }
